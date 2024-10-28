@@ -1,9 +1,10 @@
-
 const jwt = require('jsonwebtoken');
 
 class TokenUtil {
   constructor() {
     this.secretKey = process.env.secretKey;
+    // Bind authenticateToken to the instance
+    this.authenticateToken = this.authenticateToken.bind(this);
   }
 
   generateToken(payload) {
@@ -11,28 +12,26 @@ class TokenUtil {
   }
 
   verifyToken(token) {
-   
     try {
       return jwt.verify(token, this.secretKey);
     } catch (err) {
       throw new Error('Invalid token');
     }
   }
- 
- authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) return res.sendStatus(401);
+  authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+  
+    if (!token) return res.sendStatus(401);
 
-  jwt.verify(token,"lol", (err, user) => {
-    if (err) return res.sendStatus(403);
+    jwt.verify(token, this.secretKey, (err, user) => {
+      if (err) return res.sendStatus(403);
 
-    req.auth = user;
-    next();
-  });
+      req.auth = user;
+      next();
+    });
+  }
 }
 
-}
-
-module.exports = new TokenUtil(); 
+module.exports = new TokenUtil();
